@@ -52,7 +52,7 @@ variable "image_registry" {
 variable "image_tag" {
   description = "Tag d'image AISIA à déployer (utilisé pour le tagging Azure)."
   type        = string
-  default     = "v6.9.99"
+  default     = "v6.10.0"
 }
 
 variable "domain" {
