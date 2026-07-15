@@ -8,7 +8,7 @@
 
 # terraform-azure-aisia
 
-> **v6.12.41** — module registry — bootstrap Azure + substrat AISIA
+> **v6.12.42** — module registry — bootstrap Azure + substrat AISIA
 
 ## Cœur d'AISIA (identité produit)
 
@@ -23,7 +23,7 @@ puis cloud si nécessaire — via `BanditRouter`, pas un simple reverse-proxy.
 |--------------|-------|
 | 1 provider fixe | **88** providers + **58** modèles locaux |
 | Stateless | Qdrant + audit AI Act + multi-tenant |
-| SaaS opaque | Déployable Swarm/K8s — **v6.12.41** LIVE |
+| SaaS opaque | Déployable Swarm/K8s — **v6.12.42** LIVE |
 
 Documentation : [README racine](../../../../README.md) ·
 [Product Identity](../../../../specification/03-Project-State/Product-Identity-AISIA.md)
@@ -71,7 +71,7 @@ module "aisia_aks" {
 
   org_id      = "acme"
   service_key = "C1"
-  image_tag   = "v6.12.41"
+  image_tag   = "v6.12.42"
 
   location       = "francecentral"
   resource_group = "aisia-acme-rg"
@@ -83,7 +83,7 @@ module "aisia_app" {
   source  = "app.terraform.io/AISIA/aisia-cluster/kubernetes"
   version = "~> 1.0"
 
-  image_tag = "v6.12.41"
+  image_tag = "v6.12.42"
   tier      = "saas"
   domain    = "acme.aisia.fr"
 }
@@ -100,7 +100,7 @@ module "aisia_app" {
 | `profile` | Profil de dimensionnement (S \| M \| L \| XL) | `string` | `"S"` | non |
 | `node_count` | Nombre de nœuds du pool système AKS | `number` | `1` | non |
 | `image_registry` | Registry des images AISIA | `string` | `"registry.aisia.fr"` | non |
-| `image_tag` | Tag d'image AISIA (pour tagging Azure) | `string` | `"v6.12.41"` | non |
+| `image_tag` | Tag d'image AISIA (pour tagging Azure) | `string` | `"v6.12.42"` | non |
 | `domain` | Domaine custom (vide = *.aisia.fr) | `string` | `""` | non |
 | `tier` | Offre tarifaire (saas \| baas \| paas) | `string` | `"saas"` | non |
 | `gpu_enabled` | Provisionner un node pool GPU (Standard_NC4as_T4_v3) | `bool` | `false` | non |
@@ -150,4 +150,4 @@ module "aisia_app" {
 - **Référence API** : [api.aisia.fr/docs](https://api.aisia.fr/docs)
 - **Provider Terraform** : [aisia-foundation/aisia](https://registry.terraform.io/providers/aisia-foundation/aisia/latest/docs)
 - **Guide d'implémentation** : [getting-started](https://registry.terraform.io/providers/aisia-foundation/aisia/latest/docs/guides/getting-started)
-- **Version LIVE** : **v6.12.41**
+- **Version LIVE** : **v6.12.42**
