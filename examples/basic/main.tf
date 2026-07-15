@@ -33,7 +33,7 @@ module "aisia_aks" {
 
   org_id      = "acme"
   service_key = "C1"
-  image_tag   = "v6.12.39"
+  image_tag   = "v6.12.40"
   tier        = "saas"
 
   location       = "francecentral"
@@ -56,7 +56,7 @@ module "aisia_aks" {
 # module "aisia_app" {
 #   source  = "app.terraform.io/AISIA/aisia-cluster/kubernetes"
 #   version = "~> 1.0"
-#   image_tag = "v6.12.39"
+#   image_tag = "v6.12.40"
 #   tier      = "saas"
 #   domain    = "acme.aisia.fr"
 # }
