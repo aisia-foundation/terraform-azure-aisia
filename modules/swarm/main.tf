@@ -1,5 +1,5 @@
 ###############################################################################
-# AISIA — Multi-cloud Phase 4 partie 2 (sprint v6.13.18)
+# AISIA — Multi-cloud Phase 4 partie 2 (sprint v6.14.1)
 #
 # Module Terraform Azure : déploie un cluster Docker Swarm AISIA minimal sur
 # Azure Linux VMs (Standard_D2s_v3).
@@ -17,7 +17,7 @@
 #   cd infra/terraform/azure
 #   az login
 #   terraform init
-#   terraform plan -var="image_tag=v6.13.11"
+#   terraform plan -var="image_tag=v6.14.1"
 #   terraform apply
 #
 # Dépendances : Terraform >= 1.5, az CLI logué (ou ARM_* env vars envoyées
@@ -33,7 +33,7 @@ resource "azurerm_resource_group" "aisia" {
 
   tags = {
     Project = "AISIA"
-    Sprint  = "v6.13.18"
+    Sprint  = "v6.14.1"
   }
 }
 
