@@ -1,4 +1,4 @@
-# AISIA — Terraform Azure — versions et provider (sprint v6.13.16)
+# AISIA — Terraform Azure — versions et provider (sprint v6.13.18)
 terraform {
   required_version = ">= 1.5.0"
 

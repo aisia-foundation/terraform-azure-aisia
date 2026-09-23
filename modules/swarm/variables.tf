@@ -1,7 +1,7 @@
 ###############################################################################
 # AISIA Terraform Azure — variables
 #
-# Contrat NORMALISÉ v6.13.16 : les 13 variables communes ci-dessous sont
+# Contrat NORMALISÉ v6.13.18 : les 13 variables communes ci-dessous sont
 # identiques (noms + types + defaults cloud-agnostiques) à tous les clouds ×
 # substrats (référence : infra/terraform/gcp/{k8s,swarm}). Les defaults
 # spécifiques au cloud (region, instance_flavor, substrate) sont adaptés à Azure.
@@ -64,7 +64,7 @@ variable "image_registry" {
 variable "image_tag" {
   description = "Tag d'image AISIA à déployer."
   type        = string
-  default     = "v6.13.16"
+  default     = "v6.13.18"
 }
 
 variable "domain" {
@@ -120,7 +120,14 @@ variable "ssh_public_key" {
 }
 
 variable "ssh_allowed_cidrs" {
-  description = "CIDRs autorisés à se connecter en SSH (TODO prod : IP fixe admin)."
+  description = "CIDRs optionnels autorisés à se connecter en SSH. Une liste vide désactive l'exposition SSH."
   type        = list(string)
-  default     = ["0.0.0.0/0"]
+  default     = []
+  validation {
+    condition = alltrue([
+      for cidr in var.ssh_allowed_cidrs :
+      cidr != "0.0.0.0/0" && can(cidrhost(cidr, 0))
+    ])
+    error_message = "ssh_allowed_cidrs ne peut contenir 0.0.0.0/0 et chaque valeur doit être un CIDR valide. Une liste vide désactive SSH."
+  }
 }

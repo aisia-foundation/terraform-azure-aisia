@@ -1,5 +1,5 @@
 ###############################################################################
-# AISIA — Multi-cloud Phase 4 partie 2 (sprint v6.13.16)
+# AISIA — Multi-cloud Phase 4 partie 2 (sprint v6.13.18)
 #
 # Module Terraform Azure : déploie un cluster Docker Swarm AISIA minimal sur
 # Azure Linux VMs (Standard_D2s_v3).
@@ -33,7 +33,7 @@ resource "azurerm_resource_group" "aisia" {
 
   tags = {
     Project = "AISIA"
-    Sprint  = "v6.13.16"
+    Sprint  = "v6.13.18"
   }
 }
 
@@ -61,16 +61,19 @@ resource "azurerm_network_security_group" "aisia" {
   location            = azurerm_resource_group.aisia.location
   resource_group_name = azurerm_resource_group.aisia.name
 
-  security_rule {
-    name                       = "ssh"
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefixes    = var.ssh_allowed_cidrs
-    destination_address_prefix = "*"
+  dynamic "security_rule" {
+    for_each = var.ssh_allowed_cidrs
+    content {
+      name                       = "ssh-${security_rule.key}"
+      priority                   = 100 + security_rule.key
+      direction                  = "Inbound"
+      access                     = "Allow"
+      protocol                   = "Tcp"
+      source_port_range          = "*"
+      destination_port_range     = "22"
+      source_address_prefix      = security_rule.value
+      destination_address_prefix = "*"
+    }
   }
 
   security_rule {
