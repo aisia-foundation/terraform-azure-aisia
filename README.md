@@ -68,8 +68,8 @@ provider "kubernetes" {
 
 # L1 — substrat AKS
 module "aisia_aks" {
-  source  = "app.terraform.io/AISIA/aisia/azure"
-  version = "~> 1.0"
+  source  = "aisia-foundation/aisia/azure"
+  version = "6.14.1"
 
   org_id      = "acme"
   service_key = "C1"
@@ -82,8 +82,8 @@ module "aisia_aks" {
 
 # L2 — déploiement AISIA sur AKS
 module "aisia_app" {
-  source  = "app.terraform.io/AISIA/aisia-cluster/kubernetes"
-  version = "~> 1.0"
+  source  = "aisia-foundation/cluster/aisia"
+  version = "6.14.1"
 
   image_tag = "v6.14.1"
   tier      = "saas"
@@ -134,7 +134,7 @@ module "aisia_app" {
 - Provider `hashicorp/azurerm ~> 4.0`
 - `az login` ou variables ARM_* d'environnement
 - `provider "kubernetes"` configuré dans le root module avec les outputs sensibles
-- Module `terraform-aisia-cluster ~> 1.0` pour déployer l'application
+- Module `aisia-foundation/cluster/aisia` 6.14.1 pour déployer l'application
 
 ## Licence
 

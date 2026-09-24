@@ -27,8 +27,8 @@ provider "azurerm" {
 ###############################################################################
 module "aisia_aks" {
   # Registre HCP privé (nécessite credentials) :
-  #   source  = "app.terraform.io/AISIA/aisia/azure"
-  #   version = "~> 1.0"
+  #   source  = "aisia-foundation/aisia/azure"
+  #   version = "6.14.1"
   source = "../../"
 
   org_id      = "acme"
@@ -54,8 +54,8 @@ module "aisia_aks" {
 # }
 #
 # module "aisia_app" {
-#   source  = "app.terraform.io/AISIA/aisia-cluster/kubernetes"
-#   version = "~> 1.0"
+#   source  = "aisia-foundation/cluster/aisia"
+#   version = "6.14.1"
 #   image_tag = "v6.14.1"
 #   tier      = "saas"
 #   domain    = "acme.aisia.fr"
