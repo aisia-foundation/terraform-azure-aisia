@@ -33,7 +33,7 @@ module "aisia_aks" {
 
   org_id      = "acme"
   service_key = "C1"
-  image_tag   = "v6.14.19"
+  image_tag   = "v6.14.20"
   tier        = "saas"
 
   location       = "francecentral"
@@ -41,6 +41,11 @@ module "aisia_aks" {
   cluster_name   = "aisia-acme-aks"
   node_count     = 1
   vm_size        = "Standard_D2s_v3"
+
+  # API server privée par défaut : le L2 (provider kubernetes) doit tourner
+  # depuis le VNet, un VPN ou un bastion. Pour une API publique restreinte :
+  # private_cluster_enabled         = false
+  # api_server_authorized_ip_ranges = ["203.0.113.10/32"] # IP d'administration
 }
 
 ###############################################################################
@@ -56,7 +61,7 @@ module "aisia_aks" {
 # module "aisia_app" {
 #   source  = "aisia-foundation/cluster/aisia"
 #   version = "6.14.1"
-#   image_tag = "v6.14.19"
+#   image_tag = "v6.14.20"
 #   tier      = "saas"
 #   domain    = "acme.aisia.fr"
 # }

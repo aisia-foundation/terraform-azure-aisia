@@ -52,7 +52,7 @@ variable "image_registry" {
 variable "image_tag" {
   description = "Tag d'image AISIA à déployer (utilisé pour le tagging Azure)."
   type        = string
-  default     = "v6.14.19"
+  default     = "v6.14.20"
 }
 
 variable "domain" {
@@ -112,4 +112,35 @@ variable "gpu_vm_size" {
   description = "Taille VM du pool GPU optionnel (Standard_NC4as_T4_v3 = 1x NVIDIA T4)."
   type        = string
   default     = "Standard_NC4as_T4_v3"
+}
+
+###############################################################################
+# Exposition de l'API server et isolation réseau
+###############################################################################
+variable "private_cluster_enabled" {
+  description = "API server AKS privée (joignable depuis le VNet, un VPN ou un bastion). Vrai par défaut. Faux exige api_server_authorized_ip_ranges. Changer ce réglage sur un cluster existant le recrée."
+  type        = bool
+  default     = true
+}
+
+variable "api_server_authorized_ip_ranges" {
+  description = "Plages IP autorisées sur l'API server publique (utilisées seulement si private_cluster_enabled = false) ; 0.0.0.0/0 refusé."
+  type        = list(string)
+  default     = []
+  validation {
+    condition = alltrue([
+      for c in var.api_server_authorized_ip_ranges : can(cidrhost(c, 0)) && !endswith(c, "/0")
+    ])
+    error_message = "api_server_authorized_ip_ranges : CIDR valides uniquement, jamais 0.0.0.0/0."
+  }
+}
+
+variable "network_policy" {
+  description = "Moteur de NetworkPolicy Kubernetes du cluster AKS (azure ou calico)."
+  type        = string
+  default     = "azure"
+  validation {
+    condition     = contains(["azure", "calico"], var.network_policy)
+    error_message = "network_policy doit valoir azure ou calico."
+  }
 }

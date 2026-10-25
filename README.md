@@ -8,7 +8,7 @@
 
 # terraform-azure-aisia
 
-> **v6.14.18** · code **v6.14.19** (worktree candidat non tagué), registry/images LIVE encore **v6.14.18** — module registry — bootstrap Azure + substrat AISIA
+> **v6.14.19** · code **v6.14.20** (worktree candidat non tagué), registry/images LIVE encore **v6.14.19** — module registry — bootstrap Azure + substrat AISIA
 
 ## Cœur d'AISIA (identité produit)
 
@@ -23,9 +23,9 @@ puis cloud si nécessaire — via `BanditRouter`, pas un simple reverse-proxy.
 |--------------|-------|
 | 1 provider fixe | **167** moteurs IA |
 | Catalogue modèles | **9568** modèles |
-| Modèles locaux actifs | **63** / 135 catalogués |
+| Modèles locaux actifs | **63** / 168 catalogués |
 | Stateless | Qdrant + audit AI Act + multi-tenant |
-| SaaS opaque | Déployable Swarm/K8s — runtime **v6.14.18** · code **v6.14.19** |
+| SaaS opaque | Déployable Swarm/K8s — runtime **v6.14.19** · code **v6.14.20** |
 
 Documentation : [README racine](../../../../README.md) ·
 [Product Identity](../../../../specification/03-Project-State/Product-Identity-AISIA.md)
@@ -73,11 +73,15 @@ module "aisia_aks" {
 
   org_id      = "acme"
   service_key = "C1"
-  image_tag   = "v6.14.19"
+  image_tag   = "v6.14.20"
 
   location       = "francecentral"
   resource_group = "aisia-acme-rg"
   node_count     = 2
+
+  # API privée par défaut. Pour piloter le L2 depuis l'extérieur du VNet :
+  private_cluster_enabled         = false
+  api_server_authorized_ip_ranges = ["203.0.113.10/32"] # IP d'administration
 }
 
 # L2 — déploiement AISIA sur AKS
@@ -85,7 +89,7 @@ module "aisia_app" {
   source  = "aisia-foundation/cluster/aisia"
   version = "6.14.1"
 
-  image_tag = "v6.14.19"
+  image_tag = "v6.14.20"
   tier      = "saas"
   domain    = "acme.aisia.fr"
 }
@@ -102,7 +106,7 @@ module "aisia_app" {
 | `profile` | Profil de dimensionnement (S \| M \| L \| XL) | `string` | `"S"` | non |
 | `node_count` | Nombre de nœuds du pool système AKS | `number` | `1` | non |
 | `image_registry` | Registry des images AISIA | `string` | `"registry.aisia.fr"` | non |
-| `image_tag` | Tag d'image AISIA (pour tagging Azure) | `string` | `"v6.14.19"` | non |
+| `image_tag` | Tag d'image AISIA (pour tagging Azure) | `string` | `"v6.14.20"` | non |
 | `domain` | Domaine custom (vide = *.aisia.fr) | `string` | `""` | non |
 | `tier` | Offre tarifaire (saas \| baas \| paas) | `string` | `"saas"` | non |
 | `gpu_enabled` | Provisionner un node pool GPU (Standard_NC4as_T4_v3) | `bool` | `false` | non |
@@ -112,6 +116,9 @@ module "aisia_app" {
 | `vm_size` | Taille VM nœuds AKS (Standard_D2s_v3 = 2 vCPU / 8 GB) | `string` | `"Standard_D2s_v3"` | non |
 | `k8s_version` | Version Kubernetes AKS (null = recommandée Azure) | `string` | `null` | non |
 | `gpu_vm_size` | Taille VM pool GPU optionnel | `string` | `"Standard_NC4as_T4_v3"` | non |
+| `private_cluster_enabled` | API server privée ; `false` exige `api_server_authorized_ip_ranges` | `bool` | `true` | non |
+| `api_server_authorized_ip_ranges` | Plages autorisées sur l'API publique (`0.0.0.0/0` refusé) | `list(string)` | `[]` | non |
+| `network_policy` | Moteur NetworkPolicy (`azure` \| `calico`) | `string` | `"azure"` | non |
 
 ## Outputs
 
@@ -136,6 +143,25 @@ module "aisia_app" {
 - `provider "kubernetes"` configuré dans le root module avec les outputs sensibles
 - Module `aisia-foundation/cluster/aisia` 6.14.1 pour déployer l'application
 
+## Sécurité par défaut
+
+- **RBAC Kubernetes** explicitement activé.
+- **API server privée** (`private_cluster_enabled = true`) : le provider
+  `kubernetes` du L2 doit tourner depuis le VNet, un VPN ou un bastion. Pour une
+  API publique, `private_cluster_enabled = false` **et** au moins une plage dans
+  `api_server_authorized_ip_ranges` (précondition bloquante sinon).
+- **NetworkPolicy** activée (`network_policy = "azure"`, ou `calico`).
+- Sous-module `modules/swarm` : l'entrée web 80/443 reste publique par défaut
+  (`web_ingress_cidrs = ["*"]`, fonction même du substrat ; exception trivy
+  `AVD-AZU-0047` justifiée dans le code). **Durcir** avec les CIDR d'un CDN,
+  d'un WAF ou du réseau d'entreprise. SSH et Swarm ne sont jamais publics.
+
+> **Mise à niveau d'un cluster existant** — activer `private_cluster_enabled`
+> sur un cluster AKS déjà créé le **recrée**. Pour le conserver, fixer
+> `private_cluster_enabled = false` et renseigner
+> `api_server_authorized_ip_ranges`. L'ajout d'une NetworkPolicy peut aussi
+> exiger une recréation selon la version du provider : lire le `plan`.
+
 ## Licence
 
 [Mozilla Public License 2.0](LICENSE) — Copyright (c) 2026 AISIA (Sébastien Lambert).
@@ -154,7 +180,7 @@ module "aisia_app" {
 | `profile` | `string` | `"S"` | Profil de dimensionnement (S | M | L | XL). |
 | `node_count` | `number` | `1` | Nombre de nœuds du pool système AKS. |
 | `image_registry` | `string` | `"registry.aisia.fr"` | Registry des images AISIA (utilisé pour le tagging ; l'app est déployée via terraform-aisia-cluster). |
-| `image_tag` | `string` | `"v6.14.19"` | Tag d'image AISIA à déployer (utilisé pour le tagging Azure). |
+| `image_tag` | `string` | `"v6.14.20"` | Tag d'image AISIA à déployer (utilisé pour le tagging Azure). |
 | `domain` | `string` | `""` | Domaine custom de l'org (vide = *.aisia.fr). |
 | `tier` | `string` | `"saas"` | Offre tarifaire AISIA (saas | baas | paas). |
 | `gpu_enabled` | `bool` | `false` | Provisionner un node pool GPU (Standard_NC4as_T4_v3 par défaut). |
@@ -164,6 +190,9 @@ module "aisia_app" {
 | `vm_size` | `string` | `"Standard_D2s_v3"` | Taille VM Azure des nœuds AKS (Standard_D2s_v3 = 2 vCPU / 8 GB RAM). |
 | `k8s_version` | `string` | `null` | Version Kubernetes AKS (null = version recommandée par Azure). |
 | `gpu_vm_size` | `string` | `"Standard_NC4as_T4_v3"` | Taille VM du pool GPU optionnel (Standard_NC4as_T4_v3 = 1x NVIDIA T4). |
+| `private_cluster_enabled` | `bool` | `true` | API server AKS privée (joignable depuis le VNet, un VPN ou un bastion). Vrai par défaut. Faux exige api_server_authorized_ip_ranges. Changer ce réglage sur un cluster existant le recrée. |
+| `api_server_authorized_ip_ranges` | `list(string)` | `[]` | Plages IP autorisées sur l'API server publique (utilisées seulement si private_cluster_enabled = false) ; 0.0.0.0/0 refusé. |
+| `network_policy` | `string` | `"azure"` | Moteur de NetworkPolicy Kubernetes du cluster AKS (azure ou calico). |
 
 ### Outputs (parité `outputs.tf`)
 
@@ -188,24 +217,24 @@ module "aisia_app" {
 - **Référence API** : [api.aisia.fr/docs](https://api.aisia.fr/docs)
 - **Provider Terraform** : [aisia-foundation/aisia](https://registry.terraform.io/providers/aisia-foundation/aisia/latest/docs)
 - **Guide d'implémentation** : [getting-started](https://registry.terraform.io/providers/aisia-foundation/aisia/latest/docs/guides/getting-started)
-- **Version module / code** : **v6.14.19**
-- **PROD LIVE documentaire** : **v6.14.18** (runtime cluster ; distinct du tag module)
+- **Version module / code** : **v6.14.20**
+- **PROD LIVE documentaire** : **v6.14.19** (runtime cluster ; distinct du tag module)
 
 <!-- TF-REGISTRY-STATUS -->
 ## Statut publication registry (honnête)
 
-> Mesuré à la régénération docs · **version code TF** **v6.14.19** (`VERSION` modules + provider) · PROD LIVE documentaire **v6.14.18**.
+> Mesuré à la régénération docs · **version code TF** **v6.14.20** (`VERSION` modules + provider) · PROD LIVE documentaire **v6.14.19**.
 
 | Artefact | Repo | Public registry.terraform.io |
 |----------|------|------------------------------|
-| Provider `aisia-foundation/aisia` | `6.14.19` | **6.14.17** ❌ écart |
-| Module `terraform-aisia-cluster` (`cluster/aisia`) | `6.14.19` | **6.14.18** ❌ écart |
-| Module `terraform-aisia-swarm` (`swarm/aisia`) | `6.14.19` | **6.14.18** ❌ écart |
-| Module `terraform-aws-aisia` (`aisia/aws`) | `6.14.19` | **6.14.18** ❌ écart |
-| Module `terraform-azure-aisia` (`aisia/azure`) | `6.14.19` | **6.14.18** ❌ écart |
-| Module `terraform-google-aisia` (`aisia/google`) | `6.14.19` | **6.14.18** ❌ écart |
-| Module `terraform-ovh-aisia` (`aisia/ovh`) | `6.14.19` | **6.14.18** ❌ écart |
-| Module `terraform-scaleway-aisia` (`aisia/scaleway`) | `6.14.19` | **6.14.18** ❌ écart |
+| Provider `aisia-foundation/aisia` | `6.14.20` | **6.14.19** ❌ écart |
+| Module `terraform-aisia-cluster` (`cluster/aisia`) | `6.14.20` | **6.14.19** ❌ écart |
+| Module `terraform-aisia-swarm` (`swarm/aisia`) | `6.14.20` | **6.14.19** ❌ écart |
+| Module `terraform-aws-aisia` (`aisia/aws`) | `6.14.20` | **6.14.19** ❌ écart |
+| Module `terraform-azure-aisia` (`aisia/azure`) | `6.14.20` | **6.14.19** ❌ écart |
+| Module `terraform-google-aisia` (`aisia/google`) | `6.14.20` | **6.14.19** ❌ écart |
+| Module `terraform-ovh-aisia` (`aisia/ovh`) | `6.14.20` | **6.14.19** ❌ écart |
+| Module `terraform-scaleway-aisia` (`aisia/scaleway`) | `6.14.20` | **6.14.19** ❌ écart |
 
 HCP privé (`app.terraform.io/AISIA`) : modules + provider publiés via `scripts/ops/publish_terraform.sh --apply` (mesuré hors ce tableau). Ne pas écrire « 100 % registry public » si Google public est absent.
 

@@ -64,7 +64,7 @@ variable "image_registry" {
 variable "image_tag" {
   description = "Tag d'image AISIA à déployer."
   type        = string
-  default     = "v6.14.19"
+  default     = "v6.14.20"
 }
 
 variable "domain" {
@@ -129,5 +129,18 @@ variable "ssh_allowed_cidrs" {
       cidr != "0.0.0.0/0" && can(cidrhost(cidr, 0))
     ])
     error_message = "ssh_allowed_cidrs ne peut contenir 0.0.0.0/0 et chaque valeur doit être un CIDR valide. Une liste vide désactive SSH."
+  }
+}
+
+variable "web_ingress_cidrs" {
+  description = "Sources autorisées en entrée HTTP/HTTPS (Traefik). Défaut [\"*\"] = public, fonction du substrat ; restreindre à des CIDR (CDN, WAF, réseau d'entreprise) pour durcir."
+  type        = list(string)
+  default     = ["*"]
+  nullable    = false
+  validation {
+    condition = length(var.web_ingress_cidrs) > 0 && alltrue([
+      for c in var.web_ingress_cidrs : c == "*" || can(cidrhost(c, 0))
+    ]) && (length(var.web_ingress_cidrs) == 1 || !contains(var.web_ingress_cidrs, "*"))
+    error_message = "web_ingress_cidrs : [\"*\"] ou une liste non vide de CIDR valides (« * » ne se combine pas avec d'autres valeurs)."
   }
 }

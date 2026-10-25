@@ -27,6 +27,13 @@
 ###############################################################################
 # Resource group + Networking
 ###############################################################################
+locals {
+  # Une seule source : préfixe unique (identique au comportement historique
+  # « * ») ; plusieurs : liste de préfixes. Azure refuse les deux à la fois.
+  web_ingress_single = length(var.web_ingress_cidrs) == 1 ? var.web_ingress_cidrs[0] : null
+  web_ingress_multi  = length(var.web_ingress_cidrs) > 1 ? var.web_ingress_cidrs : null
+}
+
 resource "azurerm_resource_group" "aisia" {
   name     = "${var.cluster_name}-rg"
   location = var.region
@@ -76,27 +83,34 @@ resource "azurerm_network_security_group" "aisia" {
     }
   }
 
+  # Entrée web Traefik (80/443) : publique par défaut, car c'est la fonction
+  # même du substrat (exposer AISIA). Restreindre via `web_ingress_cidrs`
+  # (CDN, WAF, réseau d'entreprise). SSH et Swarm ne sont jamais publics.
   security_rule {
-    name                       = "http"
-    priority                   = 200
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
+    name                   = "http"
+    priority               = 200
+    direction              = "Inbound"
+    access                 = "Allow"
+    protocol               = "Tcp"
+    source_port_range      = "*"
+    destination_port_range = "80"
+    #trivy:ignore:AVD-AZU-0047 Entrée web publique voulue (Traefik) ; restreindre via web_ingress_cidrs.
+    source_address_prefix      = local.web_ingress_single
+    source_address_prefixes    = local.web_ingress_multi
     destination_address_prefix = "*"
   }
 
   security_rule {
-    name                       = "https"
-    priority                   = 210
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "443"
-    source_address_prefix      = "*"
+    name                   = "https"
+    priority               = 210
+    direction              = "Inbound"
+    access                 = "Allow"
+    protocol               = "Tcp"
+    source_port_range      = "*"
+    destination_port_range = "443"
+    #trivy:ignore:AVD-AZU-0047 Entrée web publique voulue (Traefik) ; restreindre via web_ingress_cidrs.
+    source_address_prefix      = local.web_ingress_single
+    source_address_prefixes    = local.web_ingress_multi
     destination_address_prefix = "*"
   }
 

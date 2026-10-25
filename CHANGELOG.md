@@ -2,6 +2,24 @@
 
 Format : [Keep a Changelog](https://keepachangelog.com/) · Versioning : SemVer.
 
+## [Unreleased] — durcissement IaC (2026-10-23)
+
+Corrige les constats trivy HIGH/CRITICAL. Publication par le train de release.
+
+### Security
+- AKS : RBAC explicite, API server privée par défaut (ou plages autorisées
+  obligatoires), NetworkPolicy activée.
+- `modules/swarm` : entrée web 80/443 paramétrable (`web_ingress_cidrs`).
+
+### Added
+- Variables `private_cluster_enabled`, `api_server_authorized_ip_ranges`,
+  `network_policy` (racine), `web_ingress_cidrs` (`modules/swarm`, défaut
+  `["*"]` = comportement inchangé).
+
+### Changed — à lire avant la mise à niveau
+- Un cluster AKS existant est recréé si `private_cluster_enabled` passe à
+  `true` : fixer `false` + `api_server_authorized_ip_ranges` pour l'éviter.
+
 ## [6.14.1] — 2026-09-24
 
 ### Alignement de version — aucun changement fonctionnel

@@ -66,12 +66,34 @@ resource "azurerm_kubernetes_cluster" "aks" {
     type = "SystemAssigned"
   }
 
+  # RBAC Kubernetes explicite (jamais de cluster sans contrôle d'accès).
+  role_based_access_control_enabled = true
+
+  # API server privée par défaut. En mode public (opt-in), l'accès est limité
+  # aux plages de `api_server_authorized_ip_ranges` (exigées, voir précondition).
+  private_cluster_enabled = var.private_cluster_enabled
+
+  dynamic "api_server_access_profile" {
+    for_each = var.private_cluster_enabled ? [] : [1]
+    content {
+      authorized_ip_ranges = var.api_server_authorized_ip_ranges
+    }
+  }
+
   network_profile {
     network_plugin    = "azure"
+    network_policy    = var.network_policy
     load_balancer_sku = "standard"
   }
 
   tags = local.tags
+
+  lifecycle {
+    precondition {
+      condition     = var.private_cluster_enabled || length(var.api_server_authorized_ip_ranges) > 0
+      error_message = "private_cluster_enabled = false exige au moins une plage dans api_server_authorized_ip_ranges (sinon l'API AKS serait ouverte à Internet)."
+    }
+  }
 }
 
 ###############################################################################
