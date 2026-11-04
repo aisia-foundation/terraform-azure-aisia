@@ -28,12 +28,12 @@ provider "azurerm" {
 module "aisia_aks" {
   # Registre HCP privé (nécessite credentials) :
   #   source  = "aisia-foundation/aisia/azure"
-  #   version = "6.14.1"
+  #   version = "6.14.27"
   source = "../../"
 
   org_id      = "acme"
   service_key = "C1"
-  image_tag   = "v6.14.26"
+  image_tag   = "v6.14.27"
   tier        = "saas"
 
   location       = "francecentral"
@@ -60,8 +60,8 @@ module "aisia_aks" {
 #
 # module "aisia_app" {
 #   source  = "aisia-foundation/cluster/aisia"
-#   version = "6.14.1"
-#   image_tag = "v6.14.26"
+#   version = "6.14.27"
+#   image_tag = "v6.14.27"
 #   tier      = "saas"
 #   domain    = "acme.aisia.fr"
 # }
